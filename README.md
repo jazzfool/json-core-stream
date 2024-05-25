@@ -9,10 +9,13 @@ Things it does differently:
 - Deserializer reads bytes from a `Read` trait instance.
 - Deserializer has an internal buffer (size can be specified as a const generic).
 - No longer supports deserializing into borrowed strings; can only deserialize strings into `heapless::String` now.
+- Serializer writes bytes into a `Write` trait instance.
 
 The existing methods to de/serialize to/from a slice/str remain,
 however there is now a public `Read` trait that can be used with `from_stream`,
 and a public `Write` trait that can be used with `to_stream`.
+
+The purpose of this library is to provide JSON serialization and deserialization whilst interfacing with external memory (e.g., an SD card) on microcontrollers, using as little RAM as possible.
 
 ## License
 
