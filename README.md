@@ -1,19 +1,18 @@
-# `serde-json-core`
+# `json-core-stream`
 
-> [`serde-json`] for `no_std` programs
+no-std, no alloc
 
-[`serde-json`]: https://crates.io/crates/serde_json
+A fork of [`serde-json-core`](https://github.com/rust-embedded-community/serde-json-core) with changes to support de/serialization from/to a stream of bytes.
 
-This project is developed and maintained by the [rust-embedded-community].
+Things it does differently:
 
-[rust-embedded-community]: https://github.com/rust-embedded-community/meta
+- Deserializer reads bytes from a `Read` trait instance.
+- Deserializer has an internal buffer (size can be specified as a const generic).
+- No longer supports deserializing into borrowed strings; can only deserialize strings into `heapless::String` now.
 
-## [Documentation](https://docs.rs/serde-json-core)
-
-## Minimum Supported Rust Version (MSRV)
-
-This crate is guaranteed to compile on stable Rust 1.62.0 and up. It *might*
-compile with older versions but that may change in any new patch release.
+The existing methods to de/serialize to/from a slice/str remain,
+however there is now a public `Read` trait that can be used with `from_stream`,
+and a public `Write` trait that can be used with `to_stream`.
 
 ## License
 

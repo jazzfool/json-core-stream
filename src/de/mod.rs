@@ -754,12 +754,12 @@ impl fmt::Display for Error {
     }
 }
 
-struct SliceReader<'de> {
+struct SliceRead<'de> {
     buf: &'de [u8],
     index: usize,
 }
 
-impl<'de> Read<'de> for SliceReader<'de> {
+impl<'de> Read<'de> for SliceRead<'de> {
     fn next(&mut self) {
         self.index += 1;
     }
@@ -781,18 +781,27 @@ impl<'de> Read<'de> for SliceReader<'de> {
     }
 }
 
+/// Deserializes an instance of type T from an arbitrary stream given by the [`Read`] `R`.
+pub fn from_stream<'a, R, T, const N: usize>(r: R) -> Result<(T, usize)>
+where
+    T: de::Deserialize<'a>,
+    R: Read<'a>,
+{
+    let mut de = Deserializer::<R, N>::new(r);
+    let value = de::Deserialize::deserialize(&mut de)?;
+    let length = de.end()?;
+
+    Ok((value, length))
+}
+
 /// Deserializes an instance of type `T` from bytes of JSON text
 /// Returns the value and the number of bytes consumed in the process
 pub fn from_slice<'a, T, const N: usize>(buf: &'a [u8]) -> Result<(T, usize)>
 where
     T: de::Deserialize<'a>,
 {
-    let r = SliceReader { buf, index: 0 };
-    let mut de = Deserializer::<SliceReader<'_>, N>::new(r);
-    let value = de::Deserialize::deserialize(&mut de)?;
-    let length = de.end()?;
-
-    Ok((value, length))
+    let r = SliceRead { buf, index: 0 };
+    from_stream::<'_, SliceRead<'_>, T, N>(r)
 }
 
 /// Deserializes an instance of type T from a string of JSON text

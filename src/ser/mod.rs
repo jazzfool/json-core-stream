@@ -27,6 +27,8 @@ pub type Result<T> = ::core::result::Result<T, Error>;
 pub enum Error {
     /// Buffer is full
     BufferFull,
+    /// Stream write operation could not be completed.
+    StreamFailure,
 }
 
 impl From<()> for Error {
@@ -49,17 +51,26 @@ impl fmt::Display for Error {
     }
 }
 
+/// This trait is used by [`Serializer`] to write a stream of bytes.
+pub trait Write {
+    /// Write a buffer of bytes, returning the number of bytes written (if any).
+    fn write(&mut self, buf: &[u8]) -> Result<()>;
+}
+
 /// A structure that serializes Rust values as JSON into a buffer.
-pub struct Serializer<'a> {
-    buf: &'a mut [u8],
+pub struct Serializer<W> {
+    writer: W,
     current_length: usize,
 }
 
-impl<'a> Serializer<'a> {
+impl<'ser, W> Serializer<W>
+where
+    W: Write,
+{
     /// Create a new `Serializer`
-    pub fn new(buf: &'a mut [u8]) -> Self {
+    pub fn new(writer: W) -> Self {
         Serializer {
-            buf,
+            writer,
             current_length: 0,
         }
     }
@@ -70,29 +81,13 @@ impl<'a> Serializer<'a> {
     }
 
     fn push(&mut self, c: u8) -> Result<()> {
-        if self.current_length < self.buf.len() {
-            unsafe { self.push_unchecked(c) };
-            Ok(())
-        } else {
-            Err(Error::BufferFull)
-        }
-    }
-
-    unsafe fn push_unchecked(&mut self, c: u8) {
-        self.buf[self.current_length] = c;
-        self.current_length += 1;
+        self.extend_from_slice(&[c])
     }
 
     fn extend_from_slice(&mut self, other: &[u8]) -> Result<()> {
-        if self.current_length + other.len() > self.buf.len() {
-            // won't fit in the buf; don't modify anything and return an error
-            Err(Error::BufferFull)
-        } else {
-            for c in other {
-                unsafe { self.push_unchecked(*c) };
-            }
-            Ok(())
-        }
+        self.writer.write(other)?;
+        self.current_length += other.len();
+        Ok(())
     }
 
     fn push_char(&mut self, c: char) -> Result<()> {
@@ -241,16 +236,19 @@ fn hex(c: u8) -> (u8, u8) {
     (hex_4bit(c >> 4), hex_4bit(c & 0x0F))
 }
 
-impl<'a, 'b: 'a> ser::Serializer for &'a mut Serializer<'b> {
+impl<'a, W> ser::Serializer for &'a mut Serializer<W>
+where
+    W: Write,
+{
     type Ok = ();
     type Error = Error;
-    type SerializeSeq = SerializeSeq<'a, 'b>;
-    type SerializeTuple = SerializeSeq<'a, 'b>;
-    type SerializeTupleStruct = SerializeSeq<'a, 'b>;
+    type SerializeSeq = SerializeSeq<'a, W>;
+    type SerializeTuple = SerializeSeq<'a, W>;
+    type SerializeTupleStruct = SerializeSeq<'a, W>;
     type SerializeTupleVariant = Unreachable;
-    type SerializeMap = SerializeMap<'a, 'b>;
-    type SerializeStruct = SerializeStruct<'a, 'b>;
-    type SerializeStructVariant = SerializeStructVariant<'a, 'b>;
+    type SerializeMap = SerializeMap<'a, W>;
+    type SerializeStruct = SerializeStruct<'a, W>;
+    type SerializeStructVariant = SerializeStructVariant<'a, W>;
 
     fn serialize_bool(self, v: bool) -> Result<Self::Ok> {
         if v {
@@ -453,12 +451,15 @@ impl<'a, 'b: 'a> ser::Serializer for &'a mut Serializer<'b> {
     }
 }
 
-struct StringCollector<'a, 'b> {
-    ser: &'a mut Serializer<'b>,
+struct StringCollector<'a, W> {
+    ser: &'a mut Serializer<W>,
 }
 
-impl<'a, 'b> StringCollector<'a, 'b> {
-    pub fn new(ser: &'a mut Serializer<'b>) -> Self {
+impl<'a, W> StringCollector<'a, W>
+where
+    W: Write,
+{
+    pub fn new(ser: &'a mut Serializer<W>) -> Self {
         Self { ser }
     }
 
@@ -471,10 +472,40 @@ impl<'a, 'b> StringCollector<'a, 'b> {
     }
 }
 
-impl<'a, 'b> fmt::Write for StringCollector<'a, 'b> {
+impl<'a, W> fmt::Write for StringCollector<'a, W>
+where
+    W: Write,
+{
     fn write_str(&mut self, s: &str) -> fmt::Result {
         self.do_write_str(s).or(Err(fmt::Error))
     }
+}
+
+struct SliceWrite<'ser> {
+    buf: &'ser mut [u8],
+    offset: usize,
+}
+
+impl<'ser> Write for SliceWrite<'ser> {
+    fn write(&mut self, buf: &[u8]) -> Result<()> {
+        if self.buf.len() - self.offset < buf.len() {
+            return Err(Error::BufferFull);
+        }
+        self.buf[self.offset..self.offset + buf.len()].copy_from_slice(buf);
+        self.offset += buf.len();
+        Ok(())
+    }
+}
+
+/// Serializes the given data structure into an arbitrary stream handled by the [`Write`] `W`.
+pub fn to_stream<T, W>(value: &T, w: W) -> Result<usize>
+where
+    T: ser::Serialize + ?Sized,
+    W: Write,
+{
+    let mut ser = Serializer::new(w);
+    value.serialize(&mut ser)?;
+    Ok(ser.current_length)
 }
 
 /// Serializes the given data structure as a string of JSON text
@@ -504,9 +535,8 @@ pub fn to_slice<T>(value: &T, buf: &mut [u8]) -> Result<usize>
 where
     T: ser::Serialize + ?Sized,
 {
-    let mut ser = Serializer::new(buf);
-    value.serialize(&mut ser)?;
-    Ok(ser.current_length)
+    let w = SliceWrite { buf, offset: 0 };
+    to_stream(value, w)
 }
 
 impl ser::Error for Error {

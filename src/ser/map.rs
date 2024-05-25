@@ -1,19 +1,24 @@
+use crate::ser::{Error, Result, Serializer, Write};
 use serde::ser;
 
-use crate::ser::{Error, Result, Serializer};
-
-pub struct SerializeMap<'a, 'b> {
-    ser: &'a mut Serializer<'b>,
+pub struct SerializeMap<'a, W> {
+    ser: &'a mut Serializer<W>,
     first: bool,
 }
 
-impl<'a, 'b: 'a> SerializeMap<'a, 'b> {
-    pub(crate) fn new(ser: &'a mut Serializer<'b>) -> Self {
+impl<'a, W> SerializeMap<'a, W>
+where
+    W: Write,
+{
+    pub(crate) fn new(ser: &'a mut Serializer<W>) -> Self {
         SerializeMap { ser, first: true }
     }
 }
 
-impl<'a, 'b: 'a> ser::SerializeMap for SerializeMap<'a, 'b> {
+impl<'a, W> ser::SerializeMap for SerializeMap<'a, W>
+where
+    W: Write,
+{
     type Ok = ();
     type Error = Error;
 

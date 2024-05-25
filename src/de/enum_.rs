@@ -1,18 +1,23 @@
-use serde::de;
-
 use crate::de::{Deserializer, Error, Read, Result};
+use serde::de;
 
 pub(crate) struct UnitVariantAccess<'a, R, const N: usize> {
     de: &'a mut Deserializer<R, N>,
 }
 
-impl<'a, 'de, R: Read<'de>, const N: usize> UnitVariantAccess<'a, R, N> {
+impl<'a, 'de, R, const N: usize> UnitVariantAccess<'a, R, N>
+where
+    R: Read<'de>,
+{
     pub(crate) fn new(de: &'a mut Deserializer<R, N>) -> Self {
         UnitVariantAccess { de }
     }
 }
 
-impl<'a, 'de, R: Read<'de>, const N: usize> de::EnumAccess<'de> for UnitVariantAccess<'a, R, N> {
+impl<'a, 'de, R, const N: usize> de::EnumAccess<'de> for UnitVariantAccess<'a, R, N>
+where
+    R: Read<'de>,
+{
     type Error = Error;
     type Variant = Self;
 
@@ -25,7 +30,10 @@ impl<'a, 'de, R: Read<'de>, const N: usize> de::EnumAccess<'de> for UnitVariantA
     }
 }
 
-impl<'a, 'de, R: Read<'de>, const N: usize> de::VariantAccess<'de> for UnitVariantAccess<'a, R, N> {
+impl<'a, 'de, R, const N: usize> de::VariantAccess<'de> for UnitVariantAccess<'a, R, N>
+where
+    R: Read<'de>,
+{
     type Error = Error;
 
     fn unit_variant(self) -> Result<()> {
@@ -58,13 +66,19 @@ pub(crate) struct VariantAccess<'a, R, const N: usize> {
     de: &'a mut Deserializer<R, N>,
 }
 
-impl<'a, 'de, R: Read<'de>, const N: usize> VariantAccess<'a, R, N> {
+impl<'a, 'de, R, const N: usize> VariantAccess<'a, R, N>
+where
+    R: Read<'de>,
+{
     pub(crate) fn new(de: &'a mut Deserializer<R, N>) -> Self {
         VariantAccess { de }
     }
 }
 
-impl<'a, 'de, R: Read<'de>, const N: usize> de::EnumAccess<'de> for VariantAccess<'a, R, N> {
+impl<'a, 'de, R, const N: usize> de::EnumAccess<'de> for VariantAccess<'a, R, N>
+where
+    R: Read<'de>,
+{
     type Error = Error;
     type Variant = Self;
 
@@ -78,7 +92,10 @@ impl<'a, 'de, R: Read<'de>, const N: usize> de::EnumAccess<'de> for VariantAcces
     }
 }
 
-impl<'a, 'de, R: Read<'de>, const N: usize> de::VariantAccess<'de> for VariantAccess<'a, R, N> {
+impl<'a, 'de, R, const N: usize> de::VariantAccess<'de> for VariantAccess<'a, R, N>
+where
+    R: Read<'de>,
+{
     type Error = Error;
 
     fn unit_variant(self) -> Result<()> {

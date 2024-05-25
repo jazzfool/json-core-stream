@@ -1,19 +1,24 @@
+use crate::ser::{Error, Result, Serializer, Write};
 use serde::ser;
 
-use crate::ser::{Error, Result, Serializer};
-
-pub struct SerializeSeq<'a, 'b> {
-    de: &'a mut Serializer<'b>,
+pub struct SerializeSeq<'a, W> {
+    de: &'a mut Serializer<W>,
     first: bool,
 }
 
-impl<'a, 'b: 'a> SerializeSeq<'a, 'b> {
-    pub(crate) fn new(de: &'a mut Serializer<'b>) -> Self {
+impl<'a, W> SerializeSeq<'a, W>
+where
+    W: Write,
+{
+    pub(crate) fn new(de: &'a mut Serializer<W>) -> Self {
         SerializeSeq { de, first: true }
     }
 }
 
-impl<'a, 'b: 'a> ser::SerializeSeq for SerializeSeq<'a, 'b> {
+impl<'a, W> ser::SerializeSeq for SerializeSeq<'a, W>
+where
+    W: Write,
+{
     type Ok = ();
     type Error = Error;
 
@@ -36,7 +41,10 @@ impl<'a, 'b: 'a> ser::SerializeSeq for SerializeSeq<'a, 'b> {
     }
 }
 
-impl<'a, 'b: 'a> ser::SerializeTuple for SerializeSeq<'a, 'b> {
+impl<'a, W> ser::SerializeTuple for SerializeSeq<'a, W>
+where
+    W: Write,
+{
     type Ok = ();
     type Error = Error;
 
@@ -52,7 +60,10 @@ impl<'a, 'b: 'a> ser::SerializeTuple for SerializeSeq<'a, 'b> {
     }
 }
 
-impl<'a, 'b: 'a> ser::SerializeTupleStruct for SerializeSeq<'a, 'b> {
+impl<'a, W> ser::SerializeTupleStruct for SerializeSeq<'a, W>
+where
+    W: Write,
+{
     type Ok = ();
     type Error = Error;
 

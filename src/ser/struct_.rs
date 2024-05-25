@@ -1,19 +1,24 @@
+use crate::ser::{Error, Result, Serializer, Write};
 use serde::ser;
 
-use crate::ser::{Error, Result, Serializer};
-
-pub struct SerializeStruct<'a, 'b> {
-    ser: &'a mut Serializer<'b>,
+pub struct SerializeStruct<'a, W> {
+    ser: &'a mut Serializer<W>,
     first: bool,
 }
 
-impl<'a, 'b: 'a> SerializeStruct<'a, 'b> {
-    pub(crate) fn new(ser: &'a mut Serializer<'b>) -> Self {
+impl<'a, W> SerializeStruct<'a, W>
+where
+    W: Write,
+{
+    pub(crate) fn new(ser: &'a mut Serializer<W>) -> Self {
         SerializeStruct { ser, first: true }
     }
 }
 
-impl<'a, 'b: 'a> ser::SerializeStruct for SerializeStruct<'a, 'b> {
+impl<'a, W> ser::SerializeStruct for SerializeStruct<'a, W>
+where
+    W: Write,
+{
     type Ok = ();
     type Error = Error;
 
@@ -42,18 +47,24 @@ impl<'a, 'b: 'a> ser::SerializeStruct for SerializeStruct<'a, 'b> {
     }
 }
 
-pub struct SerializeStructVariant<'a, 'b> {
-    ser: &'a mut Serializer<'b>,
+pub struct SerializeStructVariant<'a, W> {
+    ser: &'a mut Serializer<W>,
     first: bool,
 }
 
-impl<'a, 'b: 'a> SerializeStructVariant<'a, 'b> {
-    pub(crate) fn new(ser: &'a mut Serializer<'b>) -> Self {
+impl<'a, W> SerializeStructVariant<'a, W>
+where
+    W: Write,
+{
+    pub(crate) fn new(ser: &'a mut Serializer<W>) -> Self {
         SerializeStructVariant { ser, first: true }
     }
 }
 
-impl<'a, 'b: 'a> ser::SerializeStructVariant for SerializeStructVariant<'a, 'b> {
+impl<'a, W> ser::SerializeStructVariant for SerializeStructVariant<'a, W>
+where
+    W: Write,
+{
     type Ok = ();
     type Error = Error;
 
