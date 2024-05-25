@@ -1,19 +1,19 @@
 use serde::de;
 
-use crate::de::{Deserializer, Error, Result};
+use crate::de::{Deserializer, Error, Read, Result};
 
-pub(crate) struct SeqAccess<'a, 'b> {
+pub(crate) struct SeqAccess<'a, R, const N: usize> {
     first: bool,
-    de: &'a mut Deserializer<'b>,
+    de: &'a mut Deserializer<R, N>,
 }
 
-impl<'a, 'b> SeqAccess<'a, 'b> {
-    pub fn new(de: &'a mut Deserializer<'b>) -> Self {
+impl<'a, 'de, R: Read<'de>, const N: usize> SeqAccess<'a, R, N> {
+    pub fn new(de: &'a mut Deserializer<R, N>) -> Self {
         SeqAccess { de, first: true }
     }
 }
 
-impl<'a, 'de> de::SeqAccess<'de> for SeqAccess<'a, 'de> {
+impl<'a, 'de, R: Read<'de>, const N: usize> de::SeqAccess<'de> for SeqAccess<'a, R, N> {
     type Error = Error;
 
     fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>

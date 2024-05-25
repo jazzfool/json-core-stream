@@ -536,6 +536,8 @@ impl ser::SerializeTupleVariant for Unreachable {
 
 #[cfg(test)]
 mod tests {
+    use core::convert::TryFrom;
+
     use serde_derive::Serialize;
 
     const N: usize = 128;
@@ -848,11 +850,16 @@ mod tests {
         use serde_derive::Deserialize;
 
         #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
-        struct A<'a>(u32, Option<&'a str>, u16, bool);
+        struct A(u32, Option<heapless::String<32>>, u16, bool);
 
-        let a1 = A(42, Some("A string"), 720, false);
+        let a1 = A(
+            42,
+            Some(heapless::String::try_from("A string").unwrap()),
+            720,
+            false,
+        );
         let serialized = crate::to_string::<_, N>(&a1).unwrap();
-        let (a2, _size): (A<'_>, usize) = crate::from_str(&serialized).unwrap();
+        let (a2, _size): (A, usize) = crate::from_str::<_, 64>(&serialized).unwrap();
         assert_eq!(a1, a2);
     }
 

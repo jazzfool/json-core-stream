@@ -1,18 +1,18 @@
 use serde::de;
 
-use crate::de::{Deserializer, Error, Result};
+use crate::de::{Deserializer, Error, Read, Result};
 
-pub(crate) struct UnitVariantAccess<'a, 'b> {
-    de: &'a mut Deserializer<'b>,
+pub(crate) struct UnitVariantAccess<'a, R, const N: usize> {
+    de: &'a mut Deserializer<R, N>,
 }
 
-impl<'a, 'b> UnitVariantAccess<'a, 'b> {
-    pub(crate) fn new(de: &'a mut Deserializer<'b>) -> Self {
+impl<'a, 'de, R: Read<'de>, const N: usize> UnitVariantAccess<'a, R, N> {
+    pub(crate) fn new(de: &'a mut Deserializer<R, N>) -> Self {
         UnitVariantAccess { de }
     }
 }
 
-impl<'a, 'de> de::EnumAccess<'de> for UnitVariantAccess<'a, 'de> {
+impl<'a, 'de, R: Read<'de>, const N: usize> de::EnumAccess<'de> for UnitVariantAccess<'a, R, N> {
     type Error = Error;
     type Variant = Self;
 
@@ -25,7 +25,7 @@ impl<'a, 'de> de::EnumAccess<'de> for UnitVariantAccess<'a, 'de> {
     }
 }
 
-impl<'de, 'a> de::VariantAccess<'de> for UnitVariantAccess<'a, 'de> {
+impl<'a, 'de, R: Read<'de>, const N: usize> de::VariantAccess<'de> for UnitVariantAccess<'a, R, N> {
     type Error = Error;
 
     fn unit_variant(self) -> Result<()> {
@@ -54,17 +54,17 @@ impl<'de, 'a> de::VariantAccess<'de> for UnitVariantAccess<'a, 'de> {
     }
 }
 
-pub(crate) struct VariantAccess<'a, 'b> {
-    de: &'a mut Deserializer<'b>,
+pub(crate) struct VariantAccess<'a, R, const N: usize> {
+    de: &'a mut Deserializer<R, N>,
 }
 
-impl<'a, 'b> VariantAccess<'a, 'b> {
-    pub(crate) fn new(de: &'a mut Deserializer<'b>) -> Self {
+impl<'a, 'de, R: Read<'de>, const N: usize> VariantAccess<'a, R, N> {
+    pub(crate) fn new(de: &'a mut Deserializer<R, N>) -> Self {
         VariantAccess { de }
     }
 }
 
-impl<'a, 'de> de::EnumAccess<'de> for VariantAccess<'a, 'de> {
+impl<'a, 'de, R: Read<'de>, const N: usize> de::EnumAccess<'de> for VariantAccess<'a, R, N> {
     type Error = Error;
     type Variant = Self;
 
@@ -78,7 +78,7 @@ impl<'a, 'de> de::EnumAccess<'de> for VariantAccess<'a, 'de> {
     }
 }
 
-impl<'de, 'a> de::VariantAccess<'de> for VariantAccess<'a, 'de> {
+impl<'a, 'de, R: Read<'de>, const N: usize> de::VariantAccess<'de> for VariantAccess<'a, R, N> {
     type Error = Error;
 
     fn unit_variant(self) -> Result<()> {
