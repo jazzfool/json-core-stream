@@ -2,15 +2,14 @@
 authors = ["Jorge Aparicio <jorge@japaric.io>"]
 categories = ["no-std"]
 description = "serde-json for no_std programs"
-documentation = "https://docs.rs/serde-json-core"
 edition = "2018"
 rust-version = "1.62.0"  # keep in sync with ci, src/lib.rs, and README
 keywords = ["serde", "json"]
 license = "MIT OR Apache-2.0"
-name = "serde-json-core"
+name = "json-core-stream"
 readme = "README.md"
-repository = "https://github.com/rust-embedded-community/serde-json-core"
-version = "0.5.1"
+repository = "https://github.com/jazzfool/json-core-stream"
+version = "0.6"
 
 [dependencies]
 ryu = "1.0.5"
