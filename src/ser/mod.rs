@@ -53,7 +53,7 @@ impl fmt::Display for Error {
 
 /// This trait is used by [`Serializer`] to write a stream of bytes.
 pub trait Write {
-    /// Write a buffer of bytes, returning the number of bytes written (if any).
+    /// Write a buffer of bytes, returning `Err` if all bytes could not be written.
     fn write(&mut self, buf: &[u8]) -> Result<()>;
 }
 
