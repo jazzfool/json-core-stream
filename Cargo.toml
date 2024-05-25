@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 name = "json-core-stream"
 readme = "README.md"
 repository = "https://github.com/jazzfool/json-core-stream"
-version = "0.6"
+version = "0.6.0"
 
 [dependencies]
 ryu = "1.0.5"
