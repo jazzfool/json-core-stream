@@ -65,7 +65,7 @@ pub mod de;
 pub mod ser;
 
 #[doc(inline)]
-pub use self::de::{from_slice, from_str, from_stream, Read};
+pub use self::de::{from_slice, from_str, from_stream, from_stream_in_place, Read, SliceRead};
 #[doc(inline)]
 pub use self::ser::{to_slice, to_stream, Write};
 #[cfg(feature = "heapless")]

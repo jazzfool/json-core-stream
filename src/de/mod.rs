@@ -754,9 +754,17 @@ impl fmt::Display for Error {
     }
 }
 
-struct SliceRead<'de> {
+/// Implements [`Read`] over a slice of bytes.
+pub struct SliceRead<'de> {
     buf: &'de [u8],
     index: usize,
+}
+
+impl<'de> SliceRead<'de> {
+    /// Creates a new [`SliceRead`] that begins reading oven the given `buf` of bytes.
+    pub fn new(buf: &'de [u8]) -> Self {
+        SliceRead { buf, index: 0 }
+    }
 }
 
 impl<'de> Read<'de> for SliceRead<'de> {
@@ -781,6 +789,18 @@ impl<'de> Read<'de> for SliceRead<'de> {
     }
 }
 
+/// Deserializes an instance of type T in-place, from an arbitrary stream given by the [`Read`] `R`.
+pub fn from_stream_in_place<'a, R, T, const N: usize>(r: R, dst: &'a mut T) -> Result<usize>
+where
+    T: de::Deserialize<'a>,
+    R: Read<'a>,
+{
+    let mut de = Deserializer::<R, N>::new(r);
+    de::Deserialize::deserialize_in_place(&mut de, dst)?;
+    let length = de.end()?;
+    Ok(length)
+}
+
 /// Deserializes an instance of type T from an arbitrary stream given by the [`Read`] `R`.
 pub fn from_stream<'a, R, T, const N: usize>(r: R) -> Result<(T, usize)>
 where
@@ -800,7 +820,7 @@ pub fn from_slice<'a, T, const N: usize>(buf: &'a [u8]) -> Result<(T, usize)>
 where
     T: de::Deserialize<'a>,
 {
-    let r = SliceRead { buf, index: 0 };
+    let r = SliceRead::new(buf);
     from_stream::<'_, SliceRead<'_>, T, N>(r)
 }
 
@@ -1398,5 +1418,31 @@ mod tests {
                 852
             ))
         )
+    }
+
+    #[test]
+    fn in_place() {
+        #[derive(Default, Debug, Deserialize, PartialEq, Eq)]
+        struct Test {
+            location: heapless::String<32>,
+            temperature: u8,
+        }
+
+        let mut test = Test::default();
+
+        assert_eq!(
+            crate::from_stream_in_place::<_, Test, 64>(
+                crate::SliceRead::new(b"{ \"temperature\": 28, \"location\": \"room_0\" }"),
+                &mut test
+            ),
+            Ok(43)
+        );
+        assert_eq!(
+            test,
+            Test {
+                location: new_str("room_0"),
+                temperature: 28,
+            }
+        );
     }
 }
